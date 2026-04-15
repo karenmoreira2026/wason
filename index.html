@@ -15,37 +15,35 @@ const firebaseConfig = {
   projectId: "wason-hti",
   appId: "1:875026442132:web:3b6427db50f529caae5181"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Must match exactly what student.html stores as keys
 const OPTS_ABSTRACT = [
-  {key:'A', label:'A'},
-  {key:'C', label:'C'},
-  {key:'2', label:'2'},
-  {key:'3', label:'3'},
-  {key:'A-y-C', label:'A y C'},
-  {key:'A-y-2', label:'A y 2'},
-  {key:'A-y-3', label:'A y 3'},
-  {key:'C-y-2', label:'C y 2'},
-  {key:'C-y-3', label:'C y 3'},
-  {key:'2-y-3', label:'2 y 3'},
-  {key:'Todas', label:'Todas'},
-  {key:'Otras', label:'Otras'},
+  {key:'op_A',    label:'A'},
+  {key:'op_C',    label:'C'},
+  {key:'op_2',    label:'2'},
+  {key:'op_3',    label:'3'},
+  {key:'op_AyC',  label:'A y C'},
+  {key:'op_Ay2',  label:'A y 2'},
+  {key:'op_Ay3',  label:'A y 3'},
+  {key:'op_Cy2',  label:'C y 2'},
+  {key:'op_Cy3',  label:'C y 3'},
+  {key:'op_2y3',  label:'2 y 3'},
+  {key:'op_Todas',label:'Todas'},
+  {key:'op_Otras',label:'Otras'},
 ];
 const OPTS_CONCRETE = [
-  {key:'Cerveza', label:'Cerveza'},
-  {key:'Refresco', label:'Refresco'},
-  {key:'25-anos', label:'25 años'},
-  {key:'16-anos', label:'16 años'},
-  {key:'Cerveza-y-25-anos', label:'Cerveza y 25 años'},
-  {key:'Cerveza-y-16-anos', label:'Cerveza y 16 años'},
-  {key:'Refresco-y-25-anos', label:'Refresco y 25 años'},
-  {key:'Refresco-y-16-anos', label:'Refresco y 16 años'},
+  {key:'op_Cerveza', label:'Cerveza'},
+  {key:'op_Refresco',label:'Refresco'},
+  {key:'op_25',      label:'25 años'},
+  {key:'op_16',      label:'16 años'},
+  {key:'op_Cy25',    label:'Cerveza y 25 años'},
+  {key:'op_Cy16',    label:'Cerveza y 16 años'},
+  {key:'op_Ry25',    label:'Refresco y 25 años'},
+  {key:'op_Ry16',    label:'Refresco y 16 años'},
 ];
-const CORRECT_ABSTRACT = 'A-y-3';
-const CORRECT_CONCRETE = 'Cerveza-y-16-anos';
+const CORRECT_ABSTRACT = 'op_Ay3';
+const CORRECT_CONCRETE = 'op_Cy16';
 
 function renderBars(containerId, opts, data, correctKey) {
   const c = document.getElementById(containerId);
@@ -58,7 +56,7 @@ function renderBars(containerId, opts, data, correctKey) {
     return `<div class="bar-row">
       <div class="bar-label">${o.label}${isC ? '<span class="correct-badge">✓</span>' : ''}</div>
       <div class="bar-track">
-        <div class="bar-fill ${isC ? 'correct' : 'wrong'}" style="width:${pct}%"></div>
+        <div class="bar-fill ${isC?'correct':'wrong'}" style="width:${pct}%"></div>
         <span class="bar-count">${cnt}</span>
       </div>
     </div>`;
@@ -66,10 +64,9 @@ function renderBars(containerId, opts, data, correctKey) {
 }
 
 function buildCharts(dataA, dataC) {
-  const tA = Object.values(dataA).reduce((a, b) => a + b, 0);
-  const tC = Object.values(dataC).reduce((a, b) => a + b, 0);
+  const tA = Object.values(dataA).reduce((a,b)=>a+b,0);
+  const tC = Object.values(dataC).reduce((a,b)=>a+b,0);
   document.getElementById('total-count').textContent = tA + tC;
-
   const corrA = dataA[CORRECT_ABSTRACT] || 0;
   const corrC = dataC[CORRECT_CONCRETE] || 0;
 
@@ -78,8 +75,8 @@ function buildCharts(dataA, dataC) {
     <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tA}</div>
       <div style="margin-top:0.5rem">
         <div style="font-size:2rem;font-weight:600;color:var(--green)">${corrA}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tA > 0 ? Math.round((corrA / tA) * 100) : 0}%)</div>
-        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tA - corrA}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tA>0?Math.round((corrA/tA)*100):0}%)</div>
+        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tA-corrA}</div>
         <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
       </div></div>`;
   renderBars('bars-abstract', OPTS_ABSTRACT, dataA, CORRECT_ABSTRACT);
@@ -89,36 +86,31 @@ function buildCharts(dataA, dataC) {
     <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tC}</div>
       <div style="margin-top:0.5rem">
         <div style="font-size:2rem;font-weight:600;color:var(--green)">${corrC}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tC > 0 ? Math.round((corrC / tC) * 100) : 0}%)</div>
-        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tC - corrC}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tC>0?Math.round((corrC/tC)*100):0}%)</div>
+        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tC-corrC}</div>
         <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
       </div></div>`;
   renderBars('bars-concrete', OPTS_CONCRETE, dataC, CORRECT_CONCRETE);
 }
 
-let dataA = {}, dataC = {};
-onValue(ref(db, 'responses/abstract'), snap => { dataA = snap.val() || {}; buildCharts(dataA, dataC); });
-onValue(ref(db, 'responses/concrete'), snap => { dataC = snap.val() || {}; buildCharts(dataA, dataC); });
+let dataA={}, dataC={};
+onValue(ref(db,'responses/abstract'), snap=>{ dataA=snap.val()||{}; buildCharts(dataA,dataC); });
+onValue(ref(db,'responses/concrete'), snap=>{ dataC=snap.val()||{}; buildCharts(dataA,dataC); });
 
 window.resetData = async function() {
-  if (confirm('¿Reiniciar todas las respuestas?')) {
-    await remove(ref(db, 'responses'));
-    dataA = {}; dataC = {};
-    buildCharts({}, {});
+  if(confirm('¿Reiniciar todas las respuestas?')){
+    await remove(ref(db,'responses'));
+    dataA={}; dataC={}; buildCharts({},{});
   }
 };
-window.switchTab = function(n) {
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
-  document.querySelectorAll('.phase-panel').forEach((p, i) => p.classList.toggle('active', i === n));
+window.switchTab = function(n){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.phase-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
 };
 
-const studentURL = window.location.href.replace('index.html', 'student.html');
+const studentURL = window.location.href.replace('index.html','student.html');
 document.getElementById('student-url').textContent = studentURL;
-new QRCode(document.getElementById('qrcode'), {
-  text: studentURL, width: 140, height: 140,
-  colorDark: '#000000', colorLight: '#ffffff',
-  correctLevel: QRCode.CorrectLevel.M
-});
+new QRCode(document.getElementById('qrcode'),{text:studentURL,width:140,height:140,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');

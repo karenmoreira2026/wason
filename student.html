@@ -14,17 +14,10 @@ const firebaseConfig = {
   projectId: "wason-hti",
   appId: "1:875026442132:web:3b6427db50f529caae5181"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Safe key: replace spaces with -, remove other special chars
-function toKey(label) {
-  return label.replace(/ /g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
-}
-
-async function saveResponse(phase, value) {
-  const key = toKey(value);
+async function saveResponse(phase, key) {
   await runTransaction(ref(db, `responses/${phase}/${key}`), c => (c || 0) + 1);
 }
 
@@ -33,7 +26,7 @@ window.submitAbstract = async function() {
   if (!sel) return;
   const btn = document.getElementById('submit-abstract');
   btn.disabled = true; btn.textContent = 'Enviando...';
-  try { await saveResponse('abstract', sel.dataset.value); } catch(e) { console.error(e); }
+  try { await saveResponse('abstract', sel.dataset.key); } catch(e) { console.error(e); }
   document.getElementById('phase-0').classList.remove('active');
   document.getElementById('phase-1').classList.add('active');
   document.getElementById('dot-0').classList.replace('active','done');
@@ -46,7 +39,7 @@ window.submitConcrete = async function() {
   if (!sel) return;
   const btn = document.getElementById('submit-concrete');
   btn.disabled = true; btn.textContent = 'Enviando...';
-  try { await saveResponse('concrete', sel.dataset.value); } catch(e) { console.error(e); }
+  try { await saveResponse('concrete', sel.dataset.key); } catch(e) { console.error(e); }
   document.getElementById('phase-1').classList.remove('active');
   document.getElementById('phase-done').classList.add('active');
   document.getElementById('dot-1').classList.replace('active','done');
@@ -113,18 +106,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   </div>
   <p class="question">¿Qué tarjeta o tarjetas hay que dar vuelta para saber si la regla se cumple?</p>
   <div class="options" id="opts-abstract">
-    <button class="option-btn" data-value="A" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A</button>
-    <button class="option-btn" data-value="C" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C</button>
-    <button class="option-btn" data-value="2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2</button>
-    <button class="option-btn" data-value="3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">3</button>
-    <button class="option-btn" data-value="A y C" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y C</button>
-    <button class="option-btn" data-value="A y 2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 2</button>
-    <button class="option-btn" data-value="A y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 3</button>
-    <button class="option-btn" data-value="C y 2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 2</button>
-    <button class="option-btn" data-value="C y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 3</button>
-    <button class="option-btn" data-value="2 y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2 y 3</button>
-    <button class="option-btn" data-value="Todas" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Todas</button>
-    <button class="option-btn" data-value="Otras" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Otras</button>
+    <button class="option-btn" data-key="op_A" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A</button>
+    <button class="option-btn" data-key="op_C" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C</button>
+    <button class="option-btn" data-key="op_2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2</button>
+    <button class="option-btn" data-key="op_3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">3</button>
+    <button class="option-btn" data-key="op_AyC" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y C</button>
+    <button class="option-btn" data-key="op_Ay2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 2</button>
+    <button class="option-btn" data-key="op_Ay3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 3</button>
+    <button class="option-btn" data-key="op_Cy2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 2</button>
+    <button class="option-btn" data-key="op_Cy3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 3</button>
+    <button class="option-btn" data-key="op_2y3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2 y 3</button>
+    <button class="option-btn" data-key="op_Todas" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Todas</button>
+    <button class="option-btn" data-key="op_Otras" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Otras</button>
   </div>
   <button class="submit-btn" id="submit-abstract" disabled onclick="submitAbstract()">Confirmar respuesta</button>
 </div>
@@ -143,14 +136,14 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   </div>
   <p class="question">¿Qué tarjeta o tarjetas hay que dar vuelta para saber si la regla se cumple?</p>
   <div class="options" id="opts-concrete">
-    <button class="option-btn" data-value="Cerveza" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza</button>
-    <button class="option-btn" data-value="Refresco" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco</button>
-    <button class="option-btn" data-value="25 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">25 años</button>
-    <button class="option-btn" data-value="16 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">16 años</button>
-    <button class="option-btn" data-value="Cerveza y 25 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 25 años</button>
-    <button class="option-btn" data-value="Cerveza y 16 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 16 años</button>
-    <button class="option-btn" data-value="Refresco y 25 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 25 años</button>
-    <button class="option-btn" data-value="Refresco y 16 anos" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 16 años</button>
+    <button class="option-btn" data-key="op_Cerveza" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza</button>
+    <button class="option-btn" data-key="op_Refresco" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco</button>
+    <button class="option-btn" data-key="op_25" onclick="selectOpt(this,'opts-concrete','submit-concrete')">25 años</button>
+    <button class="option-btn" data-key="op_16" onclick="selectOpt(this,'opts-concrete','submit-concrete')">16 años</button>
+    <button class="option-btn" data-key="op_Cy25" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 25 años</button>
+    <button class="option-btn" data-key="op_Cy16" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 16 años</button>
+    <button class="option-btn" data-key="op_Ry25" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 25 años</button>
+    <button class="option-btn" data-key="op_Ry16" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 16 años</button>
   </div>
   <button class="submit-btn" id="submit-concrete" disabled onclick="submitConcrete()">Confirmar respuesta</button>
 </div>
