@@ -4,10 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Tarea de Wason</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnsFJ9upomWTmsU0_4JTGQ6AN3jpRnL2g",
+  databaseURL: "https://wason-hti-default-rtdb.firebaseio.com",
+  projectId: "wason-hti",
+  appId: "1:875026442132:web:3b6427db50f529caae5181"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+async function saveResponse(phase, value) {
+  const key = value.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  await runTransaction(ref(db, `responses/${phase}/${key}`), current => (current || 0) + 1);
+  // Also store with display label
+  await runTransaction(ref(db, `responses/${phase}/${encodeLabel(value)}`), current => (current || 0) + 1);
+}
+
+function encodeLabel(label) {
+  return label.replace(/\s/g, '__').replace(/[^a-zA-Z0-9_]/g, 'X');
+}
+
+window.submitAbstract = async function() {
+  const sel = document.querySelector('#opts-abstract .option-btn.selected');
+  if (!sel) return;
+  document.getElementById('submit-abstract').disabled = true;
+  document.getElementById('submit-abstract').textContent = 'Enviando...';
+  try {
+    await saveResponse('abstract', sel.dataset.value);
+  } catch(e) { console.error(e); }
+  document.getElementById('phase-0').classList.remove('active');
+  document.getElementById('phase-1').classList.add('active');
+  document.getElementById('dot-0').classList.replace('active','done');
+  document.getElementById('dot-1').classList.add('active');
+  window.scrollTo(0,0);
+};
+
+window.submitConcrete = async function() {
+  const sel = document.querySelector('#opts-concrete .option-btn.selected');
+  if (!sel) return;
+  document.getElementById('submit-concrete').disabled = true;
+  document.getElementById('submit-concrete').textContent = 'Enviando...';
+  try {
+    await saveResponse('concrete', sel.dataset.value);
+  } catch(e) { console.error(e); }
+  document.getElementById('phase-1').classList.remove('active');
+  document.getElementById('phase-done').classList.add('active');
+  document.getElementById('dot-1').classList.replace('active','done');
+  window.scrollTo(0,0);
+};
+
+window.selectOpt = function(btn, cid, sid) {
+  document.querySelectorAll(`#${cid} .option-btn`).forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(sid).disabled = false;
+};
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#f7f6f2;--surface:#ffffff;--border:#e0ddd6;--text:#1a1a1a;--muted:#888580;--accent:#2d5fff;--green:#1a9e6a;--green-bg:#edfaf4}
+:root{--bg:#f7f6f2;--surface:#ffffff;--border:#e0ddd6;--text:#1a1a1a;--muted:#888580;--accent:#2d5fff;--green:#1a9e6a}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:1.5rem 1rem 3rem}
 .header{text-align:center;margin-bottom:1.5rem}
 .header h1{font-size:1.1rem;font-weight:600;letter-spacing:-0.01em}
@@ -56,13 +116,23 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div class="rule-text"><strong>«Si una tarjeta tiene una vocal en una cara, entonces tiene un número par en la otra»</strong></div>
   </div>
   <div class="cards-display">
-    <div class="wcard">A</div>
-    <div class="wcard">C</div>
-    <div class="wcard">2</div>
-    <div class="wcard">3</div>
+    <div class="wcard">A</div><div class="wcard">C</div><div class="wcard">2</div><div class="wcard">3</div>
   </div>
   <p class="question">¿Qué tarjeta o tarjetas hay que dar vuelta para saber si la regla se cumple?</p>
-  <div class="options" id="opts-abstract"></div>
+  <div class="options" id="opts-abstract">
+    <button class="option-btn" data-value="A" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A</button>
+    <button class="option-btn" data-value="C" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C</button>
+    <button class="option-btn" data-value="2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2</button>
+    <button class="option-btn" data-value="3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">3</button>
+    <button class="option-btn" data-value="A y C" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y C</button>
+    <button class="option-btn" data-value="A y 2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 2</button>
+    <button class="option-btn" data-value="A y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">A y 3</button>
+    <button class="option-btn" data-value="C y 2" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 2</button>
+    <button class="option-btn" data-value="C y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">C y 3</button>
+    <button class="option-btn" data-value="2 y 3" onclick="selectOpt(this,'opts-abstract','submit-abstract')">2 y 3</button>
+    <button class="option-btn" data-value="Todas" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Todas</button>
+    <button class="option-btn" data-value="Otras" onclick="selectOpt(this,'opts-abstract','submit-abstract')">Otras</button>
+  </div>
   <button class="submit-btn" id="submit-abstract" disabled onclick="submitAbstract()">Confirmar respuesta</button>
 </div>
 
@@ -79,7 +149,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div class="wcard" style="font-size:1rem">16<span class="sublabel">años</span></div>
   </div>
   <p class="question">¿Qué tarjeta o tarjetas hay que dar vuelta para saber si la regla se cumple?</p>
-  <div class="options" id="opts-concrete"></div>
+  <div class="options" id="opts-concrete">
+    <button class="option-btn" data-value="Cerveza" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza</button>
+    <button class="option-btn" data-value="Refresco" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco</button>
+    <button class="option-btn" data-value="25 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">25 años</button>
+    <button class="option-btn" data-value="16 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">16 años</button>
+    <button class="option-btn" data-value="Cerveza y 25 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 25 años</button>
+    <button class="option-btn" data-value="Cerveza y 16 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Cerveza y 16 años</button>
+    <button class="option-btn" data-value="Refresco y 25 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 25 años</button>
+    <button class="option-btn" data-value="Refresco y 16 años" onclick="selectOpt(this,'opts-concrete','submit-concrete')">Refresco y 16 años</button>
+  </div>
   <button class="submit-btn" id="submit-concrete" disabled onclick="submitConcrete()">Confirmar respuesta</button>
 </div>
 
@@ -90,46 +169,5 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div class="success-sub">Tus respuestas ya están registradas.<br>Mirá la pantalla del docente para ver los resultados.</div>
   </div>
 </div>
-
-<script>
-const STORAGE_KEY='wason_responses_v2';
-const OPTIONS_ABSTRACT=['A','C','2','3','A y C','A y 2','A y 3','C y 2','C y 3','2 y 3','Todas','Otras'];
-const OPTIONS_CONCRETE=["Cerveza","Refresco","25 años","16 años","Cerveza y 25 años","Cerveza y 16 años","Refresco y 25 años","Refresco y 16 años"];
-let selA=null,selC=null;
-
-function renderOptions(containerId,options,submitId){
-  document.getElementById(containerId).innerHTML=options.map(o=>
-    `<button class="option-btn" data-value="${o}" onclick="selectOpt(this,'${containerId}','${submitId}')">${o}</button>`
-  ).join('');
-}
-function selectOpt(btn,cid,sid){
-  document.querySelectorAll(`#${cid} .option-btn`).forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-  if(cid==='opts-abstract')selA=btn.dataset.value;
-  if(cid==='opts-concrete')selC=btn.dataset.value;
-  document.getElementById(sid).disabled=false;
-}
-function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{abstract:{},concrete:{}};}catch(e){return{abstract:{},concrete:{}};}}
-function saveResponse(phase,value){const d=loadData();d[phase][value]=(d[phase][value]||0)+1;localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}
-function submitAbstract(){
-  if(!selA)return;
-  saveResponse('abstract',selA);
-  document.getElementById('phase-0').classList.remove('active');
-  document.getElementById('phase-1').classList.add('active');
-  document.getElementById('dot-0').classList.replace('active','done');
-  document.getElementById('dot-1').classList.add('active');
-  window.scrollTo(0,0);
-}
-function submitConcrete(){
-  if(!selC)return;
-  saveResponse('concrete',selC);
-  document.getElementById('phase-1').classList.remove('active');
-  document.getElementById('phase-done').classList.add('active');
-  document.getElementById('dot-1').classList.replace('active','done');
-  window.scrollTo(0,0);
-}
-renderOptions('opts-abstract',OPTIONS_ABSTRACT,'submit-abstract');
-renderOptions('opts-concrete',OPTIONS_CONCRETE,'submit-concrete');
-</script>
 </body>
 </html>

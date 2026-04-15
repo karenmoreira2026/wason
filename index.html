@@ -5,6 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tarea de Wason — Docente</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnsFJ9upomWTmsU0_4JTGQ6AN3jpRnL2g",
+  databaseURL: "https://wason-hti-default-rtdb.firebaseio.com",
+  projectId: "wason-hti",
+  appId: "1:875026442132:web:3b6427db50f529caae5181"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const OPTIONS_ABSTRACT = ['A','C','2','3','A y C','A y 2','A y 3','C y 2','C y 3','2 y 3','Todas','Otras'];
+const OPTIONS_CONCRETE = ['Cerveza','Refresco','25 años','16 años','Cerveza y 25 años','Cerveza y 16 años','Refresco y 25 años','Refresco y 16 años'];
+const CORRECT_ABSTRACT = 'A y 3';
+const CORRECT_CONCRETE = 'Cerveza y 16 años';
+
+function renderBars(containerId, options, data, correctLabel) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  const maxVal = Math.max(...options.map(o => data[o] || 0), 1);
+  c.innerHTML = options.map(o => {
+    const cnt = data[o] || 0;
+    const pct = (cnt / maxVal) * 100;
+    const isC = o === correctLabel;
+    return `<div class="bar-row">
+      <div class="bar-label">${o}${isC ? '<span class="correct-badge">✓</span>' : ''}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${isC ? 'correct' : 'wrong'}" style="width:${pct}%"></div>
+        <span class="bar-count">${cnt}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildCharts(dataA, dataC) {
+  const tA = Object.values(dataA).reduce((a, b) => a + b, 0);
+  const tC = Object.values(dataC).reduce((a, b) => a + b, 0);
+  document.getElementById('total-count').textContent = tA + tC;
+
+  document.getElementById('chart-abstract').innerHTML = `
+    <div class="chart-card"><div class="chart-title">Distribución de respuestas</div><div class="bars" id="bars-abstract"></div></div>
+    <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tA}</div>
+      <div style="margin-top:0.5rem">
+        <div style="font-size:2rem;font-weight:600;color:var(--green)">${dataA[CORRECT_ABSTRACT] || 0}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tA > 0 ? Math.round(((dataA[CORRECT_ABSTRACT] || 0) / tA) * 100) : 0}%)</div>
+        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tA - (dataA[CORRECT_ABSTRACT] || 0)}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
+      </div></div>`;
+  renderBars('bars-abstract', OPTIONS_ABSTRACT, dataA, CORRECT_ABSTRACT);
+
+  document.getElementById('chart-concrete').innerHTML = `
+    <div class="chart-card"><div class="chart-title">Distribución de respuestas</div><div class="bars" id="bars-concrete"></div></div>
+    <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tC}</div>
+      <div style="margin-top:0.5rem">
+        <div style="font-size:2rem;font-weight:600;color:var(--green)">${dataC[CORRECT_CONCRETE] || 0}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tC > 0 ? Math.round(((dataC[CORRECT_CONCRETE] || 0) / tC) * 100) : 0}%)</div>
+        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tC - (dataC[CORRECT_CONCRETE] || 0)}</div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
+      </div></div>`;
+  renderBars('bars-concrete', OPTIONS_CONCRETE, dataC, CORRECT_CONCRETE);
+}
+
+let dataA = {}, dataC = {};
+
+onValue(ref(db, 'responses/abstract'), snap => {
+  dataA = snap.val() || {};
+  buildCharts(dataA, dataC);
+});
+onValue(ref(db, 'responses/concrete'), snap => {
+  dataC = snap.val() || {};
+  buildCharts(dataA, dataC);
+});
+
+window.resetData = async function() {
+  if (confirm('¿Reiniciar todas las respuestas? Esta acción no se puede deshacer.')) {
+    await remove(ref(db, 'responses'));
+    dataA = {}; dataC = {};
+    buildCharts({}, {});
+  }
+};
+
+window.switchTab = function(n) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
+  document.querySelectorAll('.phase-panel').forEach((p, i) => p.classList.toggle('active', i === n));
+};
+
+// QR
+const studentURL = window.location.href.replace('index.html', 'student.html');
+document.getElementById('student-url').textContent = studentURL;
+new QRCode(document.getElementById('qrcode'), {
+  text: studentURL, width: 140, height: 140,
+  colorDark: '#000000', colorLight: '#ffffff',
+  correctLevel: QRCode.CorrectLevel.M
+});
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -86,57 +184,5 @@ h1{font-size:1.4rem;font-weight:500;letter-spacing:-0.02em;margin-bottom:0.25rem
   <div class="chart-grid" id="chart-concrete"></div>
 </div>
 <button class="reset-btn" onclick="resetData()">Reiniciar todas las respuestas</button>
-<script>
-const STORAGE_KEY='wason_responses_v2';
-const OPTIONS_ABSTRACT=['A','C','2','3','A y C','A y 2','A y 3','C y 2','C y 3','2 y 3','Todas','Otras'];
-const OPTIONS_CONCRETE=["Cerveza","Refresco","25 años","16 años","Cerveza y 25 años","Cerveza y 16 años","Refresco y 25 años","Refresco y 16 años"];
-const CORRECT_ABSTRACT='A y 3';
-const CORRECT_CONCRETE='Cerveza y 16 años';
-function getStudentURL(){return window.location.href.replace('index.html','student.html');}
-function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{abstract:{},concrete:{}};}catch(e){return{abstract:{},concrete:{}};}}
-function renderBars(containerId,options,data,correctLabel){
-  const c=document.getElementById(containerId);if(!c)return;
-  const maxVal=Math.max(...options.map(o=>data[o]||0),1);
-  c.innerHTML=options.map(o=>{
-    const cnt=data[o]||0;const pct=(cnt/maxVal)*100;const isC=o===correctLabel;
-    return`<div class="bar-row"><div class="bar-label">${o}${isC?'<span class="correct-badge">✓</span>':''}</div><div class="bar-track"><div class="bar-fill ${isC?'correct':'wrong'}" style="width:${pct}%"></div><span class="bar-count">${cnt}</span></div></div>`;
-  }).join('');
-}
-function buildCharts(){
-  const d=loadData();
-  const tA=Object.values(d.abstract).reduce((a,b)=>a+b,0);
-  const tC=Object.values(d.concrete).reduce((a,b)=>a+b,0);
-  document.getElementById('total-count').textContent=tA+tC;
-  document.getElementById('chart-abstract').innerHTML=`
-    <div class="chart-card"><div class="chart-title">Distribución de respuestas</div><div class="bars" id="bars-abstract"></div></div>
-    <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tA}</div>
-      <div style="margin-top:0.5rem">
-        <div style="font-size:2rem;font-weight:600;color:var(--green)">${d.abstract[CORRECT_ABSTRACT]||0}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tA>0?Math.round(((d.abstract[CORRECT_ABSTRACT]||0)/tA)*100):0}%)</div>
-        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tA-(d.abstract[CORRECT_ABSTRACT]||0)}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
-      </div></div>`;
-  renderBars('bars-abstract',OPTIONS_ABSTRACT,d.abstract,CORRECT_ABSTRACT);
-  document.getElementById('chart-concrete').innerHTML=`
-    <div class="chart-card"><div class="chart-title">Distribución de respuestas</div><div class="bars" id="bars-concrete"></div></div>
-    <div class="chart-card"><div class="chart-title">Respuestas recibidas: ${tC}</div>
-      <div style="margin-top:0.5rem">
-        <div style="font-size:2rem;font-weight:600;color:var(--green)">${d.concrete[CORRECT_CONCRETE]||0}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">correctas (${tC>0?Math.round(((d.concrete[CORRECT_CONCRETE]||0)/tC)*100):0}%)</div>
-        <div style="font-size:2rem;font-weight:600;color:var(--muted);margin-top:1rem">${tC-(d.concrete[CORRECT_CONCRETE]||0)}</div>
-        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px">incorrectas</div>
-      </div></div>`;
-  renderBars('bars-concrete',OPTIONS_CONCRETE,d.concrete,CORRECT_CONCRETE);
-}
-function switchTab(n){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
-  document.querySelectorAll('.phase-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
-}
-function resetData(){if(confirm('¿Reiniciar todas las respuestas?')){localStorage.removeItem(STORAGE_KEY);buildCharts();}}
-const studentURL=getStudentURL();
-document.getElementById('student-url').textContent=studentURL;
-new QRCode(document.getElementById('qrcode'),{text:studentURL,width:140,height:140,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-buildCharts();setInterval(buildCharts,2000);
-</script>
 </body>
 </html>
